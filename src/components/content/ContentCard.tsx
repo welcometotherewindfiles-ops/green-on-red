@@ -22,7 +22,7 @@ const TYPE_CONFIG = {
 
 export function ContentCard({ item, categorySlug, isAdmin }: Props) {
   const { label, Icon, color, bg } = TYPE_CONFIG[item.content_type]
-  const href = `/library/${categorySlug}/${item.id}`
+  const href = `/library/item/${item.id}`
 
   return (
     <div
@@ -94,7 +94,7 @@ export function ContentCard({ item, categorySlug, isAdmin }: Props) {
         {/* Admin edit button */}
         {isAdmin && (
           <Link
-            href={`/library/${categorySlug}/${item.id}/edit`}
+            href={`/library/item/${item.id}/edit`}
             className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ color: 'var(--color-text-tertiary)' }}
             title="Edit"
