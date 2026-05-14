@@ -133,3 +133,29 @@ a:hover {
   background: transparent;
   padding: 0;
 }
+
+/* ── Form inputs — shared across all admin forms ──────────── */
+.form-input {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  padding: 0.625rem 0.875rem;
+  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+.form-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+.form-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
