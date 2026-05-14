@@ -1,11 +1,24 @@
 // ============================================================
-// Home Page — Server Component stub
-// Full implementation comes in Phase 2.
-// Shows the three sections: upcoming meeting, last meeting,
-// and the category grid.
+// Home Page — Server Component (Phase 2)
+// Three sections: upcoming meeting, most recent past meeting,
+// topic category grid. All data fetched server-side.
 // ============================================================
-import { createClient } from '@/lib/supabase/server'
 import { getCurrentProfile } from '@/lib/auth'
+import {
+  getUpcomingMeeting,
+  getMostRecentPastMeeting,
+  getAllCategories,
+} from '@/lib/data'
+import {
+  UpcomingMeetingCard,
+  UpcomingMeetingEmpty,
+} from '@/components/home/UpcomingMeetingCard'
+import {
+  PastMeetingCard,
+  PastMeetingEmpty,
+} from '@/components/home/PastMeetingCard'
+import { CategoryGrid } from '@/components/home/CategoryGrid'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,108 +27,96 @@ export const metadata = {
 }
 
 export default async function HomePage() {
-  const profile = await getCurrentProfile()
+  // Fetch everything in parallel — no waterfall
+  const [profile, upcomingMeeting, pastMeeting, categories] = await Promise.all([
+    getCurrentProfile(),
+    getUpcomingMeeting(),
+    getMostRecentPastMeeting(),
+    getAllCategories(),
+  ])
+
+  const isAdmin = profile?.role === 'admin'
+  const firstName = profile?.full_name?.split(' ')[0] ?? null
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-      {/* Welcome header */}
-      <div className="mb-12">
-        <h1
-          className="text-3xl font-semibold mb-2"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}.
-        </h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>
-          Here&apos;s what&apos;s happening with the club.
-        </p>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+
+      {/* ── Welcome header ──────────────────────────────────── */}
+      <div className="flex items-start justify-between mb-12">
+        <div>
+          <h1
+            className="text-3xl sm:text-4xl font-semibold mb-2 tracking-tight"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {firstName ? `Hey, ${firstName}.` : 'Welcome back.'}
+          </h1>
+          <p
+            className="text-base"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Here&apos;s what&apos;s happening with the club.
+          </p>
+        </div>
+
+        {/* Admin shortcut */}
+        {isAdmin && (
+          <Link
+            href="/meetings"
+            className="hidden sm:inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg text-white shrink-0"
+            style={{ backgroundColor: 'var(--color-accent)', textDecoration: 'none' }}
+          >
+            + Add Meeting
+          </Link>
+        )}
       </div>
 
-      {/* Upcoming meeting placeholder */}
-      <section className="mb-10">
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-4"
-          style={{ color: 'var(--color-text-tertiary)' }}
-        >
-          Next Meeting
-        </h2>
-        <div
-          className="rounded-xl border p-6"
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-          }}
-        >
-          <p style={{ color: 'var(--color-text-secondary)' }}>
-            No upcoming meeting scheduled yet.
-            {profile?.role === 'admin' && (
-              <span style={{ color: 'var(--color-accent)' }}>
-                {' '}Head to <a href="/meetings" style={{ color: 'var(--color-accent)' }}>Meetings</a> to add one.
-              </span>
-            )}
-          </p>
-        </div>
+      {/* ── Upcoming meeting ────────────────────────────────── */}
+      <section className="mb-12">
+        <SectionLabel>Next Meeting</SectionLabel>
+        {upcomingMeeting ? (
+          <UpcomingMeetingCard meeting={upcomingMeeting} isAdmin={isAdmin} />
+        ) : (
+          <UpcomingMeetingEmpty isAdmin={isAdmin} />
+        )}
       </section>
 
-      {/* Most recent past meeting placeholder */}
-      <section className="mb-10">
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-4"
-          style={{ color: 'var(--color-text-tertiary)' }}
-        >
-          Most Recent Meeting
-        </h2>
-        <div
-          className="rounded-xl border p-6"
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-          }}
-        >
-          <p style={{ color: 'var(--color-text-secondary)' }}>
-            No past meetings yet.
-          </p>
-        </div>
+      {/* ── Most recent past meeting ─────────────────────────── */}
+      <section className="mb-12">
+        <SectionLabel>Most Recent Meeting</SectionLabel>
+        {pastMeeting ? (
+          <PastMeetingCard meeting={pastMeeting} isAdmin={isAdmin} />
+        ) : (
+          <PastMeetingEmpty />
+        )}
       </section>
 
-      {/* Category grid placeholder */}
+      {/* ── Topic category grid ──────────────────────────────── */}
       <section>
-        <h2
-          className="text-xs font-semibold uppercase tracking-widest mb-4"
-          style={{ color: 'var(--color-text-tertiary)' }}
-        >
-          Browse the Library
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            { name: 'Strategies', slug: 'strategies', icon: '📈' },
-            { name: 'Fundamentals', slug: 'fundamentals', icon: '📚' },
-            { name: 'Risk Management', slug: 'risk-management', icon: '🛡️' },
-            { name: 'Brokerages', slug: 'brokerages', icon: '🏦' },
-            { name: 'Backtesting', slug: 'backtesting', icon: '🔬' },
-            { name: 'Automation', slug: 'automation', icon: '⚙️' },
-          ].map((cat) => (
-            <a
-              key={cat.slug}
-              href={`/library/${cat.slug}`}
-              className="rounded-xl border p-5 transition-all hover:shadow-md group"
-              style={{
-                backgroundColor: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-                textDecoration: 'none',
-              }}
-            >
-              <div className="text-2xl mb-3">{cat.icon}</div>
-              <div
-                className="font-medium text-sm"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                {cat.name}
-              </div>
-            </a>
-          ))}
+        <div className="flex items-center justify-between mb-5">
+          <SectionLabel>Browse the Library</SectionLabel>
+          <Link
+            href="/library"
+            className="text-sm font-medium"
+            style={{ color: 'var(--color-accent)', textDecoration: 'none' }}
+          >
+            View all →
+          </Link>
         </div>
+        <CategoryGrid categories={categories} />
       </section>
+
     </div>
+  )
+}
+
+// ── Shared section label ──────────────────────────────────────────────────────
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      className="text-xs font-semibold uppercase tracking-widest mb-4"
+      style={{ color: 'var(--color-text-tertiary)' }}
+    >
+      {children}
+    </h2>
   )
 }

@@ -1,75 +1,93 @@
 // ============================================================
-// Library Index — stub (full implementation Phase 4)
+// Library Index — pulls categories live from DB (Phase 2)
+// Full content listing per category comes in Phase 4.
 // ============================================================
+import Link from 'next/link'
 import { getCurrentProfile } from '@/lib/auth'
+import { getAllCategories } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Library' }
 
-const CATEGORIES = [
-  { name: 'Strategies', slug: 'strategies', icon: '📈', description: 'Trading strategies, setups, and playbooks.' },
-  { name: 'Fundamentals', slug: 'fundamentals', icon: '📚', description: 'Core concepts, market education, and analysis frameworks.' },
-  { name: 'Risk Management', slug: 'risk-management', icon: '🛡️', description: 'Position sizing, stop losses, and portfolio risk.' },
-  { name: 'Brokerages', slug: 'brokerages', icon: '🏦', description: 'Broker reviews, platform guides, and comparisons.' },
-  { name: 'Backtesting', slug: 'backtesting', icon: '🔬', description: 'Historical testing, data sources, and methodology.' },
-  { name: 'Automation', slug: 'automation', icon: '⚙️', description: 'Algorithmic trading, scripts, and workflow tools.' },
-]
+const ICON_MAP: Record<string, string> = {
+  strategies:        '📈',
+  fundamentals:      '📚',
+  'risk-management': '🛡️',
+  brokerages:        '🏦',
+  backtesting:       '🔬',
+  automation:        '⚙️',
+}
 
 export default async function LibraryPage() {
-  const profile = await getCurrentProfile()
+  const [profile, categories] = await Promise.all([
+    getCurrentProfile(),
+    getAllCategories(),
+  ])
+
+  const isAdmin = profile?.role === 'admin'
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+
+      {/* Header */}
       <div className="flex items-start justify-between mb-10">
         <div>
           <h1
-            className="text-3xl font-semibold mb-2"
+            className="text-3xl sm:text-4xl font-semibold mb-2 tracking-tight"
             style={{ color: 'var(--color-text-primary)' }}
           >
             Library
           </h1>
           <p style={{ color: 'var(--color-text-secondary)' }}>
-            All club content organized by topic.
+            All club content, organised by topic.
           </p>
         </div>
-        {profile?.role === 'admin' && (
-          <button
-            className="text-sm font-medium px-4 py-2 rounded-lg text-white"
-            style={{ backgroundColor: 'var(--color-accent)' }}
+        {isAdmin && (
+          <Link
+            href="/library/new"
+            className="hidden sm:inline-flex text-sm font-medium px-4 py-2 rounded-lg text-white shrink-0"
+            style={{ backgroundColor: 'var(--color-accent)', textDecoration: 'none' }}
           >
             + Add Content
-          </button>
+          </Link>
         )}
       </div>
 
+      {/* Category grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {CATEGORIES.map((cat) => (
-          <a
-            key={cat.slug}
-            href={`/library/${cat.slug}`}
-            className="rounded-xl border p-6 transition-all hover:shadow-md"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-              textDecoration: 'none',
-            }}
-          >
-            <div className="text-3xl mb-4">{cat.icon}</div>
-            <h2
-              className="text-base font-semibold mb-1.5"
-              style={{ color: 'var(--color-text-primary)' }}
+        {categories.map((cat) => {
+          const icon = cat.icon ?? ICON_MAP[cat.slug] ?? '📂'
+          return (
+            <Link
+              key={cat.id}
+              href={`/library/${cat.slug}`}
+              className="group rounded-xl border p-6 transition-all hover:shadow-md hover:-translate-y-0.5"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+                textDecoration: 'none',
+              }}
             >
-              {cat.name}
-            </h2>
-            <p
-              className="text-sm leading-relaxed"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              {cat.description}
-            </p>
-          </a>
-        ))}
+              <div className="text-3xl mb-4 select-none">{icon}</div>
+              <h2
+                className="text-base font-semibold mb-1.5 group-hover:text-[var(--color-accent)] transition-colors"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                {cat.name}
+              </h2>
+              {cat.description && (
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  {cat.description}
+                </p>
+              )}
+            </Link>
+          )
+        })}
       </div>
+
     </div>
   )
 }
