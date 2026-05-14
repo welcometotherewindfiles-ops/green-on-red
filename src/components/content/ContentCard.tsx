@@ -95,7 +95,6 @@ export function ContentCard({ item, categorySlug, isAdmin }: Props) {
         {isAdmin && (
           <Link
             href={`/library/${categorySlug}/${item.id}/edit`}
-            onClick={e => e.stopPropagation()}
             className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ color: 'var(--color-text-tertiary)' }}
             title="Edit"
